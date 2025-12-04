@@ -5,46 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Agenda</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- Babel (to interpret JSX in the browser) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
-        /* Custom scrollbar for better aesthetics */
-        ::-webkit-scrollbar {
-            width: 8px;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark ::-webkit-scrollbar-thumb { background-color: #475569; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @media print {
+            @page { margin: 0.5cm; }
+            body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; }
+            header, .no-print, .settings-modal, .sticky-note { display: none !important; }
+            .print-break { page-break-inside: avoid; }
+            main { padding: 0 !important; max-width: 100% !important; }
+            .print-full-width { width: 100% !important; }
+            textarea { border: 1px solid #ddd !important; resize: none; }
+            .timeline-col { display: none !important; } 
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 20px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background-color: #475569;
-        }
-        /* Hide scrollbar for timeline container but keep functionality */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+
+        .font-retro { font-family: 'Courier New', Courier, monospace; letter-spacing: -0.5px; }
+        .font-paper { font-family: 'Georgia', 'Times New Roman', Times, serif; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- Icon Components ---
         const Icon = ({ path, className, onClick, style }) => (
             <svg onClick={onClick} style={style} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 {path}
@@ -60,7 +57,7 @@
         const CheckCircle2 = (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>} />;
         const AlertCircle = (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></>} />;
         const X = (props) => <Icon {...props} path={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />;
-        const Moon = (props) => <Icon {...props} path={<><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></>} />;
+        const Moon = (props) => <Icon {...props} path={<><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></>} />;
         const Sun = (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></>} />;
         const CalendarIcon = (props) => <Icon {...props} path={<><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></>} />;
         const ListIcon = (props) => <Icon {...props} path={<><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></>} />;
@@ -70,18 +67,17 @@
         const CheckSquare = (props) => <Icon {...props} path={<><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>} />;
         const Coffee = (props) => <Icon {...props} path={<><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="1" y2="4"/><line x1="10" x2="10" y1="1" y2="4"/><line x1="14" x2="14" y1="1" y2="4"/></>} />;
         const MoonStars = (props) => <Icon {...props} path={<><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></>} />;
+        const Printer = (props) => <Icon {...props} path={<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></>} />;
 
-        // --- Constants & Config ---
         const { useState, useEffect, useRef } = React;
         const PERIODS = [0, 1, 2, 3, 4, 5, 6];
 
-        const ACCENT_COLORS = {
-            indigo: { name: 'Indigo', class: 'indigo', hex: '#6366f1' },
-            blue: { name: 'Ocean', class: 'blue', hex: '#3b82f6' },
-            emerald: { name: 'Forest', class: 'emerald', hex: '#10b981' },
-            rose: { name: 'Rose', class: 'rose', hex: '#f43f5e' },
-            amber: { name: 'Sunset', class: 'amber', hex: '#f59e0b' },
-            violet: { name: 'Violet', class: 'violet', hex: '#8b5cf6' },
+        const THEMES = {
+            modern_indigo: { id: 'modern_indigo', name: 'Modern Indigo', class: 'indigo', font: 'font-sans', hex: '#6366f1', type: 'modern' },
+            modern_emerald: { id: 'modern_emerald', name: 'Modern Forest', class: 'emerald', font: 'font-sans', hex: '#10b981', type: 'modern' },
+            modern_rose: { id: 'modern_rose', name: 'Modern Rose', class: 'rose', font: 'font-sans', hex: '#f43f5e', type: 'modern' },
+            retro_green: { id: 'retro_green', name: 'Retro Terminal', class: 'green', font: 'font-retro', hex: '#22c55e', type: 'retro' },
+            paper_blue: { id: 'paper_blue', name: 'Academic Paper', class: 'blue', font: 'font-paper', hex: '#3b82f6', type: 'paper' },
         };
 
         const getMinutes = (timeStr) => {
@@ -118,17 +114,16 @@
             }
         };
 
-        // --- Period Colors Config ---
         const PERIOD_COLORS = {
-            0: { border: 'border-l-purple-500', badge: 'bg-purple-100 text-purple-800', darkBadge: 'bg-purple-900 text-purple-100', bg: 'bg-purple-500' },
-            1: { border: 'border-l-blue-500', badge: 'bg-blue-100 text-blue-800', darkBadge: 'bg-blue-900 text-blue-100', bg: 'bg-blue-500' },
-            2: { border: 'border-l-green-500', badge: 'bg-green-100 text-green-800', darkBadge: 'bg-green-900 text-green-100', bg: 'bg-green-500' },
-            3: { border: 'border-l-yellow-500', badge: 'bg-yellow-100 text-yellow-800', darkBadge: 'bg-yellow-900 text-yellow-100', bg: 'bg-yellow-500' },
-            4: { border: 'border-l-orange-500', badge: 'bg-orange-100 text-orange-800', darkBadge: 'bg-orange-900 text-orange-100', bg: 'bg-orange-500' },
-            5: { border: 'border-l-red-500', badge: 'bg-red-100 text-red-800', darkBadge: 'bg-red-900 text-red-100', bg: 'bg-red-500' },
-            6: { border: 'border-l-pink-500', badge: 'bg-pink-100 text-pink-800', darkBadge: 'bg-pink-900 text-pink-100', bg: 'bg-pink-500' },
-            'morning': { border: 'border-l-teal-500', badge: 'bg-teal-100 text-teal-800', darkBadge: 'bg-teal-900 text-teal-100', bg: 'bg-teal-500' },
-            'evening': { border: 'border-l-indigo-500', badge: 'bg-indigo-100 text-indigo-800', darkBadge: 'bg-indigo-900 text-indigo-100', bg: 'bg-indigo-500' },
+            0: { border: 'border-l-purple-500', badge: 'bg-purple-100 text-purple-800', darkBadge: 'bg-purple-900 text-purple-100' },
+            1: { border: 'border-l-blue-500', badge: 'bg-blue-100 text-blue-800', darkBadge: 'bg-blue-900 text-blue-100' },
+            2: { border: 'border-l-green-500', badge: 'bg-green-100 text-green-800', darkBadge: 'bg-green-900 text-green-100' },
+            3: { border: 'border-l-yellow-500', badge: 'bg-yellow-100 text-yellow-800', darkBadge: 'bg-yellow-900 text-yellow-100' },
+            4: { border: 'border-l-orange-500', badge: 'bg-orange-100 text-orange-800', darkBadge: 'bg-orange-900 text-orange-100' },
+            5: { border: 'border-l-red-500', badge: 'bg-red-100 text-red-800', darkBadge: 'bg-red-900 text-red-100' },
+            6: { border: 'border-l-pink-500', badge: 'bg-pink-100 text-pink-800', darkBadge: 'bg-pink-900 text-pink-100' },
+            'morning': { border: 'border-l-teal-500', badge: 'bg-teal-100 text-teal-800', darkBadge: 'bg-teal-900 text-teal-100' },
+            'evening': { border: 'border-l-indigo-500', badge: 'bg-indigo-100 text-indigo-800', darkBadge: 'bg-indigo-900 text-indigo-100' },
         };
 
         const getPSTDate = () => {
@@ -151,73 +146,74 @@
 
         const formatDateDisplay = (date) => {
             const today = getPSTDate();
-            
             const d = new Date(date);
             d.setHours(0, 0, 0, 0);
             today.setHours(0, 0, 0, 0);
-
             const diffTime = d.getTime() - today.getTime();
             const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
             if (diffDays === 0) return 'Today';
             if (diffDays === 1) return 'Tomorrow';
             if (diffDays === -1) return 'Yesterday';
-
             return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
         };
 
-        // --- Time Block Component ---
-        // This is the key to alignment: The Time Label is part of the Card Row
         const TimeBlock = ({ 
             id, type, start, end, label, icon, 
-            data, defaultClass, isDarkMode, activeColor, 
+            data, defaultClass, isDarkMode, activeTheme, 
             onInputChange, onToggle, onCopy, isActive, 
             currentMinutes 
         }) => {
             const isGap = type === 'gap';
             const colors = PERIOD_COLORS[id] || PERIOD_COLORS['morning'];
-            const notesDone = data?.notesDone || false;
             const homeworkDone = data?.homeworkDone || false;
 
-            // Calculate progress for red line
             let progress = -1;
+            let periodProgress = 0;
             if (isActive && currentMinutes >= start && currentMinutes <= end) {
                 progress = ((currentMinutes - start) / (end - start)) * 100;
+                periodProgress = progress;
             }
 
+            const isRetro = activeTheme.type === 'retro';
+            const isPaper = activeTheme.type === 'paper';
+            
+            let cardBg = isDarkMode ? 'bg-gray-800 shadow-md border-gray-700' : 'bg-white shadow-sm';
+            if (isRetro) cardBg = 'bg-black border-green-900 shadow-none border';
+            if (isPaper) cardBg = 'bg-[#fdfbf7] shadow-sm border-gray-200';
+
+            let inputColor = isDarkMode ? 'text-gray-100 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400';
+            if (isRetro) inputColor = 'text-green-400 placeholder-green-900';
+            
+            let badgeClass = isDarkMode ? colors.darkBadge : colors.badge;
+            if (isRetro) badgeClass = 'bg-green-900 text-green-400 border border-green-700';
+
             return (
-                <div className="flex relative group">
-                    {/* Left Column: Timeline Track & Time Label */}
-                    <div className="w-16 md:w-20 flex-shrink-0 flex flex-col items-center relative">
-                        {/* The Vertical Line */}
-                        <div className={`absolute top-0 bottom-0 w-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} left-1/2 -translate-x-1/2`}></div>
-                        
-                        {/* Start Time Node */}
-                        <div className={`relative z-10 text-[10px] font-bold py-1 px-2 rounded-full mb-1 ${isActive ? `bg-${activeColor.class}-100 text-${activeColor.class}-700` : (isDarkMode ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-white text-gray-500 border border-gray-200')}`}>
+                <div className="flex relative group print-break">
+                    <div className="w-16 md:w-20 flex-shrink-0 flex flex-col items-center relative timeline-col">
+                        <div className={`absolute top-0 bottom-0 w-px ${isRetro ? 'bg-green-900' : (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')} left-1/2 -translate-x-1/2`}></div>
+                        <div className={`relative z-10 text-[10px] font-bold py-1 px-2 rounded-full mb-1 ${isActive ? `bg-${activeTheme.class}-100 text-${activeTheme.class}-700` : (isRetro ? 'bg-black text-green-700 border border-green-900' : (isDarkMode ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-white text-gray-500 border border-gray-200'))}`}>
                             {formatTime(start)}
                         </div>
                     </div>
 
-                    {/* Right Column: The Card */}
-                    <div className="flex-1 pb-6 relative">
-                        {/* Red Line Indicator */}
+                    <div className="flex-1 pb-6 relative print-full-width">
                         {progress >= 0 && (
                             <div 
-                                className="absolute -left-[calc(2.5rem+1px)] md:-left-[calc(2.5rem+1px)] w-[calc(100%+2.5rem)] flex items-center z-20 pointer-events-none transition-all duration-1000"
+                                className="absolute -left-[calc(2.5rem+1px)] md:-left-[calc(2.5rem+1px)] w-[calc(100%+2.5rem)] flex items-center z-20 pointer-events-none transition-all duration-1000 no-print"
                                 style={{ top: `${progress}%` }}
                             >
-                                <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1.5 ring-2 ring-white dark:ring-gray-900"></div>
-                                <div className="flex-1 h-0.5 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+                                <div className={`w-2.5 h-2.5 rounded-full ${isRetro ? 'bg-green-500' : 'bg-red-500'} -ml-1.5 ring-2 ring-white dark:ring-gray-900`}></div>
+                                <div className={`flex-1 h-0.5 ${isRetro ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_8px_rgba(239,68,68,0.6)]`}></div>
                             </div>
                         )}
 
                         <div 
-                            className={`rounded-xl border-l-4 overflow-hidden transition-all hover:shadow-md ${isDarkMode ? 'bg-gray-800 shadow-md border-gray-700' : 'bg-white shadow-sm'} ${colors.border} ${isActive ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-gray-900' : ''}`}
+                            className={`rounded-xl border-l-4 overflow-hidden transition-all hover:shadow-md relative ${cardBg} ${isRetro ? 'border-l-green-500' : colors.border} ${isActive ? `ring-2 ring-offset-2 ring-${activeTheme.class}-500 dark:ring-offset-gray-900` : ''}`}
                         >
                             <div className="p-4">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-3 w-full">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1 ${isDarkMode ? colors.darkBadge : colors.badge}`}>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1 ${badgeClass}`}>
                                             {icon}
                                             {label}
                                         </span>
@@ -227,53 +223,51 @@
                                                 placeholder={defaultClass || "Add Subject..."}
                                                 value={data.subject !== undefined ? data.subject : (defaultClass || '')}
                                                 onChange={(e) => onInputChange(id, 'subject', e.target.value)}
-                                                className={`font-bold text-lg border-none focus:ring-0 p-0 bg-transparent flex-1 ${isDarkMode ? 'text-gray-100 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400'}`}
+                                                className={`font-bold text-lg border-none focus:ring-0 p-0 bg-transparent flex-1 ${inputColor} ${activeTheme.font}`}
                                             />
                                         )}
-                                        {isGap && <span className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Free Time</span>}
+                                        {isGap && <span className={`text-sm ${isRetro ? 'text-green-700' : (isDarkMode ? 'text-gray-500' : 'text-gray-400')}`}>Free Time</span>}
                                     </div>
-                                    {isActive && <span className={`animate-pulse text-xs font-bold text-${activeColor.class}-500 uppercase tracking-widest px-2`}>Now</span>}
+                                    {isActive && <span className={`animate-pulse text-xs font-bold text-${activeTheme.class}-500 uppercase tracking-widest px-2 no-print`}>Now</span>}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Notes Section */}
-                                    <div className={`rounded-lg p-3 group focus-within:ring-2 focus-within:ring-${activeColor.class}-500/20 transition-all ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                                        <div className={`flex items-center justify-between mb-2 text-xs font-semibold uppercase tracking-wider ${notesDone ? 'text-green-500' : 'text-gray-500'}`}>
-                                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => onToggle(id, 'notes')}>
-                                                {notesDone ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                                                <span>{isGap ? 'To-Do / Reminders' : 'Classwork / Notes'}</span>
+                                    <div className={`rounded-lg p-3 group focus-within:ring-2 focus-within:ring-${activeTheme.class}-500/20 transition-all ${isRetro ? 'bg-green-900/10 border border-green-900' : (isPaper ? 'bg-white border border-gray-100' : (isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'))}`}>
+                                        <div className={`flex items-center justify-between mb-2 text-xs font-semibold uppercase tracking-wider ${isRetro ? 'text-green-600' : 'text-gray-500'}`}>
+                                            <div className="flex items-center gap-2">
+                                                <PenTool className="w-3 h-3" />
+                                                <span>{isGap ? 'To-Do' : 'Classwork / Notes'}</span>
                                             </div>
                                             {!isGap && (
-                                                <button onClick={() => onCopy(id, 'notes')} className={`text-gray-400 hover:text-${activeColor.class}-500 transition-colors`} title="Copy from yesterday">
+                                                <button onClick={() => onCopy(id, 'notes')} className={`text-gray-400 hover:text-${activeTheme.class}-500 transition-colors no-print`} title="Copy from yesterday">
                                                     <Copy className="w-3.5 h-3.5" />
                                                 </button>
                                             )}
                                         </div>
                                         <textarea
-                                            placeholder={isGap ? "Anything to do?" : "What did we do today?"}
+                                            placeholder={isGap ? "Tasks..." : "Class notes..."}
                                             value={data.notes || ''}
                                             onChange={(e) => onInputChange(id, 'notes', e.target.value)}
-                                            className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${isDarkMode ? 'text-gray-200 placeholder-gray-500' : 'text-gray-700 placeholder-gray-400'} ${notesDone ? 'line-through opacity-50' : ''}`}
+                                            className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${inputColor} ${activeTheme.font}`}
                                         />
                                     </div>
 
-                                    {/* Homework Section (Only for School Periods) */}
                                     {!isGap && (
                                         <div className={`rounded-lg p-3 group transition-all border ${
-                                            (data.homework && !homeworkDone) 
-                                            ? (isDarkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-100 border-red-200') 
-                                            : (isDarkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-100 border-green-200')
+                                            !homeworkDone
+                                            ? (isRetro ? 'bg-green-900/20 border-green-500' : (isDarkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-100 border-red-200')) 
+                                            : (isRetro ? 'bg-transparent border-green-900' : (isDarkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-100 border-green-200'))
                                         }`}>
                                             <div className={`flex items-center justify-between mb-2 text-xs font-semibold uppercase tracking-wider ${
                                                 homeworkDone 
-                                                    ? (isDarkMode ? 'text-green-300' : 'text-green-600') 
-                                                    : (data.homework ? (isDarkMode ? 'text-red-300' : 'text-red-600') : (isDarkMode ? 'text-green-300' : 'text-green-600'))
+                                                    ? (isRetro ? 'text-green-500' : 'text-green-600') 
+                                                    : (isRetro ? 'text-green-400' : (isDarkMode ? 'text-red-300' : 'text-red-600'))
                                             }`}>
                                                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => onToggle(id, 'homework')}>
-                                                    {homeworkDone ? <CheckSquare className="w-4 h-4" /> : (data.homework ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />)}
+                                                    {homeworkDone ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                                                     <span>Homework</span>
                                                 </div>
-                                                <button onClick={() => onCopy(id, 'homework')} className="opacity-50 hover:opacity-100 transition-opacity" title="Copy from yesterday">
+                                                <button onClick={() => onCopy(id, 'homework')} className="opacity-50 hover:opacity-100 transition-opacity no-print" title="Copy from yesterday">
                                                     <Copy className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -281,11 +275,20 @@
                                                 placeholder="No homework..."
                                                 value={data.homework || ''}
                                                 onChange={(e) => onInputChange(id, 'homework', e.target.value)}
-                                                className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${isDarkMode ? 'text-gray-200 placeholder-gray-500' : 'text-gray-700 placeholder-gray-400'} ${homeworkDone ? 'line-through opacity-50' : ''}`}
+                                                className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${inputColor} ${activeTheme.font} ${homeworkDone ? 'line-through opacity-50' : ''}`}
                                             />
                                         </div>
                                     )}
                                 </div>
+
+                                {isActive && !isGap && (
+                                    <div className="absolute bottom-0 left-0 h-1 bg-gray-200/20 w-full no-print">
+                                        <div 
+                                            className={`h-full bg-${activeTheme.class}-500 transition-all duration-1000`} 
+                                            style={{width: `${periodProgress}%`}}
+                                        ></div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -302,40 +305,60 @@
             const [isDarkMode, setIsDarkMode] = useState(false);
             const [viewMode, setViewMode] = useState('daily');
             const [streak, setStreak] = useState({ count: 0, lastDate: null });
-            const [accentColor, setAccentColor] = useState('indigo');
+            const [themeId, setThemeId] = useState('modern_indigo');
             const [currentMinutes, setCurrentMinutes] = useState(0);
 
-            // Load Data
             useEffect(() => {
                 const savedAgenda = localStorage.getItem('student_agenda_data');
                 const savedDefaults = localStorage.getItem('student_agenda_defaults');
-                const savedTheme = localStorage.getItem('student_agenda_theme');
+                const savedTheme = localStorage.getItem('student_agenda_theme_mode');
                 const savedStreak = localStorage.getItem('student_agenda_streak');
-                const savedAccent = localStorage.getItem('student_agenda_accent');
+                const savedThemeId = localStorage.getItem('student_agenda_theme_id');
                 
                 if (savedAgenda) setAgendaData(JSON.parse(savedAgenda));
                 if (savedDefaults) setDefaultClasses(JSON.parse(savedDefaults));
                 if (savedTheme) setIsDarkMode(savedTheme === 'dark');
                 if (savedStreak) setStreak(JSON.parse(savedStreak));
-                if (savedAccent) setAccentColor(savedAccent);
+                if (savedThemeId) setThemeId(savedThemeId);
                 setIsLoaded(true);
             }, []);
 
-            // Save Data
             useEffect(() => { if (isLoaded) localStorage.setItem('student_agenda_data', JSON.stringify(agendaData)); }, [agendaData, isLoaded]);
             useEffect(() => { if (isLoaded) localStorage.setItem('student_agenda_defaults', JSON.stringify(defaultClasses)); }, [defaultClasses, isLoaded]);
             useEffect(() => { if (isLoaded) localStorage.setItem('student_agenda_streak', JSON.stringify(streak)); }, [streak, isLoaded]);
-            useEffect(() => { if (isLoaded) localStorage.setItem('student_agenda_accent', accentColor); }, [accentColor, isLoaded]);
+            useEffect(() => { if (isLoaded) localStorage.setItem('student_agenda_theme_id', themeId); }, [themeId, isLoaded]);
 
             useEffect(() => {
                 if (isLoaded) {
-                    localStorage.setItem('student_agenda_theme', isDarkMode ? 'dark' : 'light');
+                    localStorage.setItem('student_agenda_theme_mode', isDarkMode ? 'dark' : 'light');
                     if (isDarkMode) document.body.classList.add('dark');
                     else document.body.classList.remove('dark');
                 }
             }, [isDarkMode, isLoaded]);
 
-            // Time Update
+            useEffect(() => {
+                const dateKey = formatDateKey(currentDate);
+                const dayData = agendaData[dateKey] || {};
+                let incompleteCount = 0;
+                let totalTasks = 0;
+
+                Object.values(dayData).forEach(p => {
+                    if (p.homework && p.homework.trim()) {
+                        totalTasks++;
+                        if (!p.homeworkDone) incompleteCount++;
+                    }
+                });
+
+                if (incompleteCount > 0) {
+                    document.title = `(${incompleteCount}) Student Agenda`;
+                } else if (totalTasks > 0 && incompleteCount === 0) {
+                    document.title = "✅ All Done! - Student Agenda";
+                } else {
+                    document.title = "Student Agenda";
+                }
+
+            }, [agendaData, currentDate]);
+
             useEffect(() => {
                 const updateTime = () => {
                     const now = new Date();
@@ -347,47 +370,17 @@
                 return () => clearInterval(interval);
             }, []);
 
-            // Get current schedule based on Day of Week and flatten it for rendering
             const getFlatSchedule = () => {
                 const day = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
                 const scheduleConfig = (day === 'Tuesday') ? SCHEDULES.TUESDAY : SCHEDULES.REGULAR;
-                
                 const flat = [];
-                
-                // 1. Before School (Gap)
-                const startOfSchool = scheduleConfig[0][0]; // Start of Period 0
-                flat.push({
-                    id: 'morning',
-                    type: 'gap',
-                    start: 0, // Midnight
-                    end: startOfSchool,
-                    label: 'Before School',
-                    icon: <Coffee className="w-3 h-3" />
-                });
-
-                // 2. Periods
+                const startOfSchool = scheduleConfig[0][0]; 
+                flat.push({ id: 'morning', type: 'gap', start: 0, end: startOfSchool, label: 'Before School', icon: <Coffee className="w-3 h-3" /> });
                 Object.entries(scheduleConfig).forEach(([period, [start, end]]) => {
-                    flat.push({
-                        id: parseInt(period),
-                        type: 'period',
-                        start,
-                        end,
-                        label: `Period ${period}`,
-                        icon: null // handled in component by badge color mostly
-                    });
+                    flat.push({ id: parseInt(period), type: 'period', start, end, label: `Period ${period}`, icon: null });
                 });
-
-                // 3. After School (Gap)
-                const endOfSchool = scheduleConfig[6][1]; // End of Period 6
-                flat.push({
-                    id: 'evening',
-                    type: 'gap',
-                    start: endOfSchool,
-                    end: 1440, // Midnight next day
-                    label: 'After School',
-                    icon: <MoonStars className="w-3 h-3" />
-                });
-
+                const endOfSchool = scheduleConfig[6][1]; 
+                flat.push({ id: 'evening', type: 'gap', start: endOfSchool, end: 1440, label: 'After School', icon: <MoonStars className="w-3 h-3" /> });
                 return flat;
             };
 
@@ -426,11 +419,34 @@
                 if (prevData) handleInputChange(period, field, prevData);
             };
 
+            const triggerConfetti = () => {
+                const count = 200;
+                const defaults = { origin: { y: 0.7 } };
+                function fire(particleRatio, opts) {
+                    if (typeof confetti === 'function') {
+                        confetti(Object.assign({}, defaults, opts, { particleCount: Math.floor(count * particleRatio) }));
+                    }
+                }
+                fire(0.25, { spread: 26, startVelocity: 55 });
+                fire(0.2, { spread: 60 });
+                fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+                fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+                fire(0.1, { spread: 120, startVelocity: 45 });
+            };
+
             const handleToggleComplete = (period, type) => {
                 const dateKey = formatDateKey(currentDate);
                 const currentStatus = agendaData[dateKey]?.[period]?.[`${type}Done`] || false;
-                handleInputChange(period, `${type}Done`, !currentStatus);
-                if (!currentStatus) {
+                const newStatus = !currentStatus;
+                
+                handleInputChange(period, `${type}Done`, newStatus);
+                
+                if (newStatus) { 
+                     const defaults = { origin: { y: 0.7 }, zIndex: 1000 };
+                     if (typeof confetti === 'function') {
+                        confetti({ ...defaults, particleCount: 40, spread: 50, startVelocity: 40 });
+                     }
+
                     const todayKey = formatDateKey(getPSTDate());
                     const lastKey = streak.lastDate;
                     if (lastKey !== todayKey) {
@@ -443,16 +459,25 @@
                 }
             };
 
+            const handlePrint = () => {
+                window.print();
+            };
+
             const dateKey = formatDateKey(currentDate);
             const dayData = agendaData[dateKey] || {};
-            const activeColor = ACCENT_COLORS[accentColor] || ACCENT_COLORS.indigo;
+            const activeTheme = THEMES[themeId] || THEMES.modern_indigo;
+            
+            const isRetro = activeTheme.type === 'retro';
+            const isPaper = activeTheme.type === 'paper';
 
-            const bgClass = isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800';
+            let bgClass = isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800';
+            if (isRetro) bgClass = 'bg-black text-green-500 font-retro';
+            if (isPaper) bgClass = 'bg-[#f0eadd] text-slate-800 font-paper'; 
+
             const headerClass = isDarkMode ? 'bg-gray-800 border-b border-gray-700' : 'bg-white shadow-sm';
             const navBtnClass = isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-white text-gray-600 shadow-sm';
             const centerNavClass = isDarkMode ? 'bg-gray-700/50 text-gray-200' : 'bg-gray-100 text-gray-800';
 
-            // Helpers for Calendar View
             const getMonthData = () => {
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
@@ -474,58 +499,44 @@
             if (!isLoaded) return null;
             const { year, month, firstDay, daysInMonth } = getMonthData();
             const flatSchedule = getFlatSchedule();
-
-            // Determine if today is being viewed to trigger red line
             const isViewingToday = formatDateKey(currentDate) === formatDateKey(getPSTDate());
 
             return (
-                <div className={`min-h-screen font-sans pb-20 transition-colors duration-200 ${bgClass}`}>
-                    <header className={`sticky top-0 z-50 transition-colors duration-200 ${headerClass}`}>
+                <div className={`min-h-screen pb-20 transition-colors duration-200 ${bgClass} ${activeTheme.font}`}>
+                    <header className={`sticky top-0 z-50 transition-colors duration-200 no-print ${isRetro ? 'bg-black border-b border-green-900' : headerClass}`}>
                         <div className="max-w-4xl mx-auto px-4 py-4">
                             <div className="flex justify-between items-center mb-4">
-                                <h1 className={`text-2xl font-bold flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                    <BookOpen className={`w-6 h-6 text-${activeColor.class}-500`} />
+                                <h1 className={`text-2xl font-bold flex items-center gap-2 ${isRetro ? 'text-green-500' : (isDarkMode ? 'text-white' : 'text-gray-900')}`}>
+                                    <BookOpen className={`w-6 h-6 text-${activeTheme.class}-500`} />
                                     My Agenda
                                 </h1>
                                 <div className="flex items-center gap-2">
-                                    <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${isDarkMode ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
+                                    <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${isRetro ? 'bg-green-900/30 text-green-500 border border-green-800' : (isDarkMode ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-50 text-orange-600')}`}>
                                         <Flame className="w-4 h-4 fill-current" />
                                         <span className="font-bold text-sm">{streak.count}</span>
                                     </div>
                                     <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1"></div>
-                                    <button onClick={() => setViewMode(viewMode === 'daily' ? 'calendar' : 'daily')} className={`p-2 rounded-full transition-colors ${isDarkMode ? `text-${activeColor.class}-400 hover:bg-gray-700` : `text-${activeColor.class}-600 hover:bg-gray-100`}`} title={viewMode === 'daily' ? "Switch to Calendar" : "Switch to List"}>
-                                        {viewMode === 'daily' ? <CalendarIcon className="w-5 h-5" /> : <ListIcon className="w-5 h-5" />}
-                                    </button>
-                                    <button onClick={toggleTheme} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-yellow-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}>
-                                        {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                                    </button>
-                                    <button onClick={() => setShowSettings(true)} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}>
-                                        <Settings className="w-5 h-5" />
-                                    </button>
+                                    
+                                    <button onClick={() => setViewMode(viewMode === 'daily' ? 'calendar' : 'daily')} className={`p-2 rounded-full transition-colors ${isDarkMode ? `text-${activeTheme.class}-400 hover:bg-gray-700` : `text-${activeTheme.class}-600 hover:bg-gray-100`}`} title="Toggle View"><CalendarIcon className="w-5 h-5" /></button>
+                                    <button onClick={handlePrint} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`} title="Print"><Printer className="w-5 h-5" /></button>
+                                    <button onClick={toggleTheme} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-yellow-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}>{isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
+                                    <button onClick={() => setShowSettings(true)} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}><Settings className="w-5 h-5" /></button>
                                 </div>
                             </div>
-                            <div className={`flex items-center justify-between p-1 rounded-lg transition-colors ${centerNavClass}`}>
-                                <button onClick={() => navigate(-1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}>
-                                    <ChevronLeft className="w-5 h-5" />
-                                </button>
+                            <div className={`flex items-center justify-between p-1 rounded-lg transition-colors ${isRetro ? 'bg-green-900/10 border border-green-900' : centerNavClass}`}>
+                                <button onClick={() => navigate(-1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}><ChevronLeft className="w-5 h-5" /></button>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={jumpToToday} className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md transition-colors ${isDarkMode ? `hover:bg-gray-600 text-${activeColor.class}-400` : `hover:bg-white text-${activeColor.class}-600`}`}>
-                                        Go to Today
-                                    </button>
+                                    <button onClick={jumpToToday} className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md transition-colors ${isRetro ? 'text-green-500 hover:bg-green-900/30' : (isDarkMode ? `hover:bg-gray-600 text-${activeTheme.class}-400` : `hover:bg-white text-${activeTheme.class}-600`)}`}>Go to Today</button>
                                     <div className="flex flex-col items-center leading-tight">
-                                        <span className={`font-semibold text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                                        <span className={`font-semibold text-lg ${isRetro ? 'text-green-400' : (isDarkMode ? 'text-gray-100' : 'text-gray-800')}`}>
                                             {viewMode === 'daily' ? formatDateDisplay(currentDate) : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                                         </span>
                                         {viewMode === 'daily' && (['Today', 'Tomorrow', 'Yesterday'].includes(formatDateDisplay(currentDate))) && (
-                                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                            </span>
+                                            <span className={`text-xs ${isRetro ? 'text-green-600' : (isDarkMode ? 'text-gray-400' : 'text-gray-500')}`}>{currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                                         )}
                                     </div>
                                 </div>
-                                <button onClick={() => navigate(1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}>
-                                    <ChevronRight className="w-5 h-5" />
-                                </button>
+                                <button onClick={() => navigate(1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}><ChevronRight className="w-5 h-5" /></button>
                             </div>
                         </div>
                     </header>
@@ -540,7 +551,7 @@
                                         data={dayData[block.id] || {}}
                                         defaultClass={defaultClasses[block.id]}
                                         isDarkMode={isDarkMode}
-                                        activeColor={activeColor}
+                                        activeTheme={activeTheme}
                                         onInputChange={handleInputChange}
                                         onToggle={handleToggleComplete}
                                         onCopy={handleCopyFromYesterday}
@@ -548,20 +559,18 @@
                                         currentMinutes={currentMinutes}
                                     />
                                 ))}
-                                {/* End of Day Time Marker */}
-                                <div className="w-20 flex-shrink-0 flex flex-col items-center relative h-8">
-                                    <div className={`absolute top-0 bottom-0 w-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} left-1/2 -translate-x-1/2`}></div>
-                                    <div className={`relative z-10 text-[10px] font-bold py-1 px-2 rounded-full ${isDarkMode ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-white text-gray-500 border border-gray-200'}`}>
+                                <div className="w-20 flex-shrink-0 flex flex-col items-center relative h-8 timeline-col">
+                                    <div className={`absolute top-0 bottom-0 w-px ${isRetro ? 'bg-green-900' : (isDarkMode ? 'bg-gray-700' : 'bg-gray-300')} left-1/2 -translate-x-1/2`}></div>
+                                    <div className={`relative z-10 text-[10px] font-bold py-1 px-2 rounded-full ${isRetro ? 'bg-black text-green-700 border border-green-900' : (isDarkMode ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-white text-gray-500 border border-gray-200')}`}>
                                         12:00 AM
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            // Calendar View
-                            <div className={`rounded-xl shadow-md p-4 animate-in fade-in zoom-in duration-200 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                            <div className={`rounded-xl shadow-md p-4 animate-in fade-in zoom-in duration-200 ${isRetro ? 'bg-black border border-green-800' : (isDarkMode ? 'bg-gray-800' : 'bg-white')}`}>
                                 <div className="grid grid-cols-7 mb-4 text-center">
                                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                        <div key={day} className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{day}</div>
+                                        <div key={day} className={`text-xs font-bold uppercase tracking-wider ${isRetro ? 'text-green-600' : (isDarkMode ? 'text-gray-400' : 'text-gray-500')}`}>{day}</div>
                                     ))}
                                 </div>
                                 <div className="grid grid-cols-7 gap-2">
@@ -573,12 +582,12 @@
                                         const isToday = formatDateKey(new Date()) === formatDateKey(dateObj);
                                         return (
                                             <button key={day} onClick={() => { setCurrentDate(dateObj); setViewMode('daily'); }}
-                                                className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all hover:scale-105 active:scale-95 border-2 ${isToday ? `border-${activeColor.class}-500 bg-${activeColor.class}-50 dark:bg-${activeColor.class}-900/30` : (isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50')}`}
+                                                className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all hover:scale-105 active:scale-95 border-2 ${isToday ? `border-${activeTheme.class}-500 bg-${activeTheme.class}-50 dark:bg-${activeTheme.class}-900/30` : (isRetro ? 'border-green-900 hover:bg-green-900/20' : (isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'))}`}
                                             >
-                                                <span className={`text-sm font-semibold ${isToday ? `text-${activeColor.class}-600 dark:text-${activeColor.class}-400` : (isDarkMode ? 'text-gray-200' : 'text-gray-700')}`}>{day}</span>
+                                                <span className={`text-sm font-semibold ${isToday ? `text-${activeTheme.class}-600 dark:text-${activeTheme.class}-400` : (isRetro ? 'text-green-500' : (isDarkMode ? 'text-gray-200' : 'text-gray-700'))}`}>{day}</span>
                                                 <div className="flex gap-1 mt-1.5 h-1.5">
                                                     {hasHomework && <div className="w-1.5 h-1.5 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-800"></div>}
-                                                    {hasNotes && <div className={`w-1.5 h-1.5 rounded-full bg-${activeColor.class}-500 ring-1 ring-white dark:ring-gray-800`}></div>}
+                                                    {hasNotes && <div className={`w-1.5 h-1.5 rounded-full bg-${activeTheme.class}-500 ring-1 ring-white dark:ring-gray-800`}></div>}
                                                 </div>
                                             </button>
                                         );
@@ -587,13 +596,13 @@
                             </div>
                         )}
 
-                        <div className="text-center pt-8 text-gray-400 text-sm">
+                        <div className="text-center pt-8 text-gray-400 text-sm no-print">
                             <p>Changes are saved automatically to this device.</p>
                         </div>
                     </main>
 
                     {showSettings && (
-                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 settings-modal">
                             <div className={`rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'}`}>
                                 <div className={`px-6 py-4 border-b flex justify-between items-center ${isDarkMode ? 'bg-gray-900/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
                                     <h2 className={`text-lg font-bold flex items-center gap-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
@@ -602,34 +611,35 @@
                                     </h2>
                                     <button onClick={() => setShowSettings(false)} className={`transition-colors ${isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}><X className="w-5 h-5" /></button>
                                 </div>
-                                <div className="p-6">
+                                <div className="p-6 max-h-[70vh] overflow-y-auto">
                                     <div className="mb-6">
-                                        <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Accent Color</label>
-                                        <div className="flex gap-3">
-                                            {Object.entries(ACCENT_COLORS).map(([key, data]) => (
+                                        <label className={`block text-xs font-bold uppercase tracking-wider mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Theme</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {Object.entries(THEMES).map(([key, data]) => (
                                                 <button 
                                                     key={key}
-                                                    onClick={() => setAccentColor(key)}
-                                                    className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${accentColor === key ? 'ring-2 ring-offset-2 dark:ring-offset-gray-800 border-white' : 'border-transparent'}`}
-                                                    style={{ backgroundColor: data.hex, borderColor: accentColor === key ? 'white' : 'transparent' }}
-                                                    title={data.name}
-                                                />
+                                                    onClick={() => setThemeId(key)}
+                                                    className={`px-3 py-2 rounded-lg text-sm font-medium border-2 text-left flex items-center gap-2 transition-all ${themeId === key ? `border-${data.class}-500 bg-${data.class}-50 dark:bg-${data.class}-900/20 text-${data.class}-700 dark:text-${data.class}-300` : (isDarkMode ? 'border-gray-700 text-gray-400 hover:bg-gray-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50')}`}
+                                                >
+                                                    <div className="w-3 h-3 rounded-full" style={{background: data.hex}}></div>
+                                                    {data.name}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
 
-                                    <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Set your default classes here.</p>
-                                    <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+                                    <p className={`text-sm mb-4 font-bold ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Default Classes</p>
+                                    <div className="space-y-3">
                                         {PERIODS.map(period => (
                                             <div key={period} className="flex items-center gap-3">
                                                 <span className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold ${isDarkMode ? PERIOD_COLORS[period].darkBadge : PERIOD_COLORS[period].badge}`}>{period}</span>
-                                                <input type="text" placeholder={`Class Name for Period ${period}`} value={defaultClasses[period] || ''} onChange={(e) => handleDefaultClassChange(period, e.target.value)} className={`flex-1 rounded-lg text-sm focus:border-${activeColor.class}-500 focus:ring-${activeColor.class}-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`} />
+                                                <input type="text" placeholder={`Class Name for Period ${period}`} value={defaultClasses[period] || ''} onChange={(e) => handleDefaultClassChange(period, e.target.value)} className={`flex-1 rounded-lg text-sm focus:border-${activeTheme.class}-500 focus:ring-${activeTheme.class}-500 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`} />
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                                 <div className={`px-6 py-4 flex justify-end ${isDarkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
-                                    <button onClick={() => setShowSettings(false)} className={`bg-${activeColor.class}-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-${activeColor.class}-700 transition-colors shadow-sm flex items-center gap-2`}><Save className="w-4 h-4" /> Save Changes</button>
+                                    <button onClick={() => setShowSettings(false)} className={`bg-${activeTheme.class}-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-${activeTheme.class}-700 transition-colors shadow-sm flex items-center gap-2`}><Save className="w-4 h-4" /> Save Changes</button>
                                 </div>
                             </div>
                         </div>
