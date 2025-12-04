@@ -14,6 +14,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Courier+Prime:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
     <style>
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -23,14 +26,92 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .font-retro { font-family: 'Courier New', Courier, monospace; letter-spacing: -0.5px; }
-        .font-paper { font-family: 'Georgia', 'Times New Roman', Times, serif; }
+        .font-retro { font-family: 'Courier Prime', monospace; }
+        .font-paper { font-family: 'Lora', serif; }
+        .font-cute { font-family: 'Quicksand', sans-serif; }
+
+        @media print {
+            @page { margin: 0.5cm; }
+            body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; }
+            header, .no-print, .settings-modal, .sticky-note { display: none !important; }
+            .print-break { page-break-inside: avoid; }
+            main { padding: 0 !important; max-width: 100% !important; }
+            .print-full-width { width: 100% !important; }
+            textarea { border: 1px solid #ddd !important; resize: none; }
+            .timeline-col { display: none !important; } 
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
+
+        const SCHOOL_START = new Date(2025, 7, 8);
+        const SCHOOL_END = new Date(2026, 4, 29);
+
+        const HOLIDAYS = {
+            '2025-09-01': { label: 'Labor Day', type: 'holiday' },
+            '2025-09-23': { label: 'No School', type: 'off' },
+            '2025-10-02': { label: 'No School', type: 'off' },
+            '2025-11-11': { label: 'Veterans Day', type: 'holiday' },
+            '2025-11-26': { label: 'Unassigned', type: 'break' },
+            '2025-11-27': { label: 'Thanksgiving', type: 'break' },
+            '2025-11-28': { label: 'Thanksgiving', type: 'break' },
+            '2026-01-12': { label: 'Pupil Free Day', type: 'off' },
+            '2026-01-19': { label: 'MLK Day', type: 'holiday' },
+            '2026-02-16': { label: 'Presidents Day', type: 'holiday' },
+            '2026-05-25': { label: 'Memorial Day', type: 'holiday' },
+            '2025-08-08': { label: 'First Day', type: 'special' },
+            '2026-05-29': { label: 'Last Day', type: 'special' }
+        };
+
+        const BREAKS = [
+            { start: new Date(2025, 11, 22), end: new Date(2026, 0, 9), label: 'Winter Break' }, 
+            { start: new Date(2026, 2, 30), end: new Date(2026, 3, 3), label: 'Spring Break' }  
+        ];
+
+        const isSchoolDay = (date) => {
+            if (date < SCHOOL_START || date > SCHOOL_END) return false;
+            const day = date.getDay();
+            if (day === 0 || day === 6) return false; 
+
+            const key = date.toISOString().split('T')[0];
+            if (HOLIDAYS[key]) return false;
+
+            for (let b of BREAKS) {
+                if (date >= b.start && date <= b.end) return false;
+            }
+            return true;
+        };
+
+        const getSchoolDaysRemaining = (currentDate) => {
+            let count = 0;
+            let iterator = new Date(currentDate);
+            if (iterator < SCHOOL_START) iterator = new Date(SCHOOL_START);
+            
+            if (iterator > SCHOOL_END) return 0;
+
+            while (iterator <= SCHOOL_END) {
+                if (isSchoolDay(iterator)) {
+                    count++;
+                }
+                iterator.setDate(iterator.getDate() + 1);
+            }
+            return count;
+        };
+
+        const getDayStatus = (date) => {
+            const key = date.toISOString().split('T')[0];
+            if (HOLIDAYS[key]) return HOLIDAYS[key];
+            
+            for (let b of BREAKS) {
+                if (date >= b.start && date <= b.end) return { label: b.label, type: 'break' };
+            }
+            return null;
+        };
+
+
         const Icon = ({ path, className, onClick, style }) => (
             <svg onClick={onClick} style={style} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 {path}
@@ -56,14 +137,15 @@
         const CheckSquare = (props) => <Icon {...props} path={<><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>} />;
         const Coffee = (props) => <Icon {...props} path={<><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="1" y2="4"/><line x1="10" x2="10" y1="1" y2="4"/><line x1="14" x2="14" y1="1" y2="4"/></>} />;
         const MoonStars = (props) => <Icon {...props} path={<><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></>} />;
+        const GraduationCap = (props) => <Icon {...props} path={<><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></>} />;
 
         const { useState, useEffect, useRef } = React;
         const PERIODS = [0, 1, 2, 3, 4, 5, 6];
 
         const THEMES = {
             modern_indigo: { id: 'modern_indigo', name: 'Modern Indigo', class: 'indigo', font: 'font-sans', hex: '#6366f1', type: 'modern' },
+            cute_pastel: { id: 'cute_pastel', name: 'Cute Pastel', class: 'pink', font: 'font-cute', hex: '#f472b6', type: 'cute' },
             modern_emerald: { id: 'modern_emerald', name: 'Modern Forest', class: 'emerald', font: 'font-sans', hex: '#10b981', type: 'modern' },
-            modern_rose: { id: 'modern_rose', name: 'Modern Rose', class: 'rose', font: 'font-sans', hex: '#f43f5e', type: 'modern' },
             retro_green: { id: 'retro_green', name: 'Retro Terminal', class: 'green', font: 'font-retro', hex: '#22c55e', type: 'retro' },
             paper_blue: { id: 'paper_blue', name: 'Academic Paper', class: 'blue', font: 'font-paper', hex: '#3b82f6', type: 'paper' },
         };
@@ -164,16 +246,22 @@
 
             const isRetro = activeTheme.type === 'retro';
             const isPaper = activeTheme.type === 'paper';
+            const isCute = activeTheme.type === 'cute';
             
             let cardBg = isDarkMode ? 'bg-gray-800 shadow-md border-gray-700' : 'bg-white shadow-sm';
             if (isRetro) cardBg = 'bg-black border-green-900 shadow-none border';
             if (isPaper) cardBg = 'bg-[#fdfbf7] shadow-sm border-gray-200';
+            if (isCute) cardBg = isDarkMode ? 'bg-gray-800 shadow-md border-pink-200/20' : 'bg-white shadow-sm border-pink-100 border-2';
 
             let inputColor = isDarkMode ? 'text-gray-100 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400';
             if (isRetro) inputColor = 'text-green-400 placeholder-green-900';
+            if (isCute) inputColor = isDarkMode ? 'text-pink-100 placeholder-gray-500' : 'text-gray-700 placeholder-pink-300';
             
             let badgeClass = isDarkMode ? colors.darkBadge : colors.badge;
             if (isRetro) badgeClass = 'bg-green-900 text-green-400 border border-green-700';
+            if (isCute) badgeClass = isDarkMode ? 'bg-pink-900 text-pink-200 rounded-2xl' : 'bg-pink-100 text-pink-700 rounded-2xl';
+
+            let cornerClass = isCute ? 'rounded-3xl' : 'rounded-xl';
 
             return (
                 <div className="flex relative group print-break">
@@ -196,7 +284,7 @@
                         )}
 
                         <div 
-                            className={`rounded-xl border-l-4 overflow-hidden transition-all hover:shadow-md relative ${cardBg} ${isRetro ? 'border-l-green-500' : colors.border} ${isActive ? `ring-2 ring-offset-2 ring-${activeTheme.class}-500 dark:ring-offset-gray-900` : ''}`}
+                            className={`${cornerClass} border-l-4 overflow-hidden transition-all hover:shadow-md relative ${cardBg} ${isRetro ? 'border-l-green-500' : colors.border} ${isActive ? `ring-2 ring-offset-2 ring-${activeTheme.class}-500 dark:ring-offset-gray-900` : ''}`}
                         >
                             <div className="p-4">
                                 <div className="flex items-center justify-between mb-3">
@@ -220,8 +308,8 @@
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className={`rounded-lg p-3 group focus-within:ring-2 focus-within:ring-${activeTheme.class}-500/20 transition-all ${isRetro ? 'bg-green-900/10 border border-green-900' : (isPaper ? 'bg-white border border-gray-100' : (isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'))}`}>
-                                        <div className={`flex items-center justify-between mb-2 text-xs font-semibold uppercase tracking-wider ${isRetro ? 'text-green-600' : 'text-gray-500'}`}>
+                                    <div className={`${cornerClass} p-3 group focus-within:ring-2 focus-within:ring-${activeTheme.class}-500/20 transition-all ${isRetro ? 'bg-green-900/10 border border-green-900' : (isPaper ? 'bg-white border border-gray-100' : (isCute ? (isDarkMode ? 'bg-gray-900/50' : 'bg-pink-50') : (isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50')))}`}>
+                                        <div className={`flex items-center justify-between mb-2 text-xs font-semibold uppercase tracking-wider ${isRetro ? 'text-green-600' : (isCute ? 'text-pink-400' : 'text-gray-500')}`}>
                                             <div className="flex items-center gap-2">
                                                 <PenTool className="w-3 h-3" />
                                                 <span>{isGap ? 'To-Do' : 'Classwork / Notes'}</span>
@@ -241,15 +329,15 @@
                                     </div>
 
                                     {!isGap && (
-                                        <div className={`rounded-lg p-3 group transition-all border ${
+                                        <div className={`${cornerClass} p-3 group transition-all border ${
                                             !homeworkDone
-                                            ? (isRetro ? 'bg-green-900/20 border-green-500' : (isDarkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-100 border-red-200')) 
-                                            : (isRetro ? 'bg-transparent border-green-900' : (isDarkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-100 border-green-200'))
+                                            ? (isRetro ? 'bg-green-900/20 border-green-500' : (isCute ? (isDarkMode ? 'bg-red-900/20 border-red-400/50' : 'bg-red-50 border-red-200') : (isDarkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-100 border-red-200'))) 
+                                            : (isRetro ? 'bg-transparent border-green-900' : (isCute ? (isDarkMode ? 'bg-green-900/20 border-green-400/50' : 'bg-green-50 border-green-200') : (isDarkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-100 border-green-200')))
                                         }`}>
                                             <div className={`flex items-center justify-between mb-2 text-xs font-semibold uppercase tracking-wider ${
                                                 homeworkDone 
-                                                    ? (isRetro ? 'text-green-500' : 'text-green-600') 
-                                                    : (isRetro ? 'text-green-400' : (isDarkMode ? 'text-red-300' : 'text-red-600'))
+                                                    ? (isRetro ? 'text-green-500' : (isCute ? 'text-green-600' : 'text-green-600')) 
+                                                    : (isRetro ? 'text-green-400' : (isCute ? 'text-red-500' : (isDarkMode ? 'text-red-300' : 'text-red-600')))
                                             }`}>
                                                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => onToggle(id, 'homework')}>
                                                     {homeworkDone ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
@@ -453,10 +541,12 @@
             
             const isRetro = activeTheme.type === 'retro';
             const isPaper = activeTheme.type === 'paper';
+            const isCute = activeTheme.type === 'cute';
 
             let bgClass = isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800';
             if (isRetro) bgClass = 'bg-black text-green-500 font-retro';
             if (isPaper) bgClass = 'bg-[#f0eadd] text-slate-800 font-paper'; 
+            if (isCute) bgClass = isDarkMode ? 'bg-gray-900 text-pink-100 font-cute' : 'bg-pink-50 text-gray-800 font-cute';
 
             const headerClass = isDarkMode ? 'bg-gray-800 border-b border-gray-700' : 'bg-white shadow-sm';
             const navBtnClass = isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-white text-gray-600 shadow-sm';
@@ -480,6 +570,8 @@
                 return { hasHomework, hasNotes };
             };
 
+            const schoolDaysLeft = getSchoolDaysRemaining(currentDate);
+
             if (!isLoaded) return null;
             const { year, month, firstDay, daysInMonth } = getMonthData();
             const flatSchedule = getFlatSchedule();
@@ -487,14 +579,19 @@
 
             return (
                 <div className={`min-h-screen pb-20 transition-colors duration-200 ${bgClass} ${activeTheme.font}`}>
-                    <header className={`sticky top-0 z-50 transition-colors duration-200 no-print ${isRetro ? 'bg-black border-b border-green-900' : headerClass}`}>
+                    <header className={`sticky top-0 z-50 transition-colors duration-200 no-print ${isRetro ? 'bg-black border-b border-green-900' : (isCute ? (isDarkMode ? 'bg-gray-800 border-b border-gray-700' : 'bg-pink-100 shadow-sm') : headerClass)}`}>
                         <div className="max-w-4xl mx-auto px-4 py-4">
                             <div className="flex justify-between items-center mb-4">
-                                <h1 className={`text-2xl font-bold flex items-center gap-2 ${isRetro ? 'text-green-500' : (isDarkMode ? 'text-white' : 'text-gray-900')}`}>
+                                <h1 className={`text-2xl font-bold flex items-center gap-2 ${isRetro ? 'text-green-500' : (isCute ? 'text-pink-600 dark:text-pink-400' : (isDarkMode ? 'text-white' : 'text-gray-900'))}`}>
                                     <BookOpen className={`w-6 h-6 text-${activeTheme.class}-500`} />
                                     My Agenda
                                 </h1>
                                 <div className="flex items-center gap-2">
+                                    <div className={`hidden sm:flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold mr-2 ${isCute ? 'bg-blue-100 text-blue-600' : (isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600')}`}>
+                                        <GraduationCap className="w-4 h-4" />
+                                        {schoolDaysLeft} Days Left
+                                    </div>
+
                                     <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${isRetro ? 'bg-green-900/30 text-green-500 border border-green-800' : (isDarkMode ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-50 text-orange-600')}`}>
                                         <Flame className="w-4 h-4 fill-current" />
                                         <span className="font-bold text-sm">{streak.count}</span>
@@ -506,7 +603,7 @@
                                     <button onClick={() => setShowSettings(true)} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}><Settings className="w-5 h-5" /></button>
                                 </div>
                             </div>
-                            <div className={`flex items-center justify-between p-1 rounded-lg transition-colors ${isRetro ? 'bg-green-900/10 border border-green-900' : centerNavClass}`}>
+                            <div className={`flex items-center justify-between p-1 rounded-lg transition-colors ${isRetro ? 'bg-green-900/10 border border-green-900' : (isCute ? (isDarkMode ? 'bg-gray-700/50' : 'bg-white/60') : centerNavClass)}`}>
                                 <button onClick={() => navigate(-1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}><ChevronLeft className="w-5 h-5" /></button>
                                 <div className="flex items-center gap-2">
                                     <button onClick={jumpToToday} className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md transition-colors ${isRetro ? 'text-green-500 hover:bg-green-900/30' : (isDarkMode ? `hover:bg-gray-600 text-${activeTheme.class}-400` : `hover:bg-white text-${activeTheme.class}-600`)}`}>Go to Today</button>
@@ -550,7 +647,7 @@
                                 </div>
                             </div>
                         ) : (
-                            <div className={`rounded-xl shadow-md p-4 animate-in fade-in zoom-in duration-200 ${isRetro ? 'bg-black border border-green-800' : (isDarkMode ? 'bg-gray-800' : 'bg-white')}`}>
+                            <div className={`rounded-xl shadow-md p-4 animate-in fade-in zoom-in duration-200 ${isRetro ? 'bg-black border border-green-800' : (isCute ? (isDarkMode ? 'bg-gray-800 border-pink-900' : 'bg-white border-pink-100') : (isDarkMode ? 'bg-gray-800' : 'bg-white'))}`}>
                                 <div className="grid grid-cols-7 mb-4 text-center">
                                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                                         <div key={day} className={`text-xs font-bold uppercase tracking-wider ${isRetro ? 'text-green-600' : (isDarkMode ? 'text-gray-400' : 'text-gray-500')}`}>{day}</div>
@@ -563,12 +660,32 @@
                                         const { hasHomework, hasNotes } = checkDayData(day);
                                         const dateObj = new Date(year, month, day);
                                         const isToday = formatDateKey(new Date()) === formatDateKey(dateObj);
+                                        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                                        
+                                        const status = getDayStatus(dateObj);
+                                        let dayStyle = '';
+                                        let label = day;
+                                        
+                                        if (status) {
+                                            if (status.type === 'holiday') dayStyle = 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800';
+                                            if (status.type === 'break') dayStyle = 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800';
+                                            if (status.type === 'off') dayStyle = 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800';
+                                            if (status.type === 'special') dayStyle = 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800';
+                                        } else {
+                                            if (isWeekend && !isToday) {
+                                                dayStyle = isRetro ? 'bg-green-900/5 border-green-900 text-green-700' : (isDarkMode ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-200 text-gray-500 border-gray-300');
+                                            }
+                                        }
+
                                         return (
                                             <button key={day} onClick={() => { setCurrentDate(dateObj); setViewMode('daily'); }}
-                                                className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all hover:scale-105 active:scale-95 border-2 ${isToday ? `border-${activeTheme.class}-500 bg-${activeTheme.class}-50 dark:bg-${activeTheme.class}-900/30` : (isRetro ? 'border-green-900 hover:bg-green-900/20' : (isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'))}`}
+                                                className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all hover:scale-105 active:scale-95 border-2 overflow-hidden ${isToday ? `border-${activeTheme.class}-500 bg-${activeTheme.class}-50 dark:bg-${activeTheme.class}-900/30` : (isRetro ? 'border-green-900' : (isDarkMode ? 'border-gray-700' : 'border-gray-100'))} ${dayStyle} ${!status && !isToday && !isWeekend ? (isRetro ? '' : (isDarkMode ? 'bg-gray-800' : 'bg-white')) : ''}`}
+                                                title={status ? status.label : ''}
                                             >
-                                                <span className={`text-sm font-semibold ${isToday ? `text-${activeTheme.class}-600 dark:text-${activeTheme.class}-400` : (isRetro ? 'text-green-500' : (isDarkMode ? 'text-gray-200' : 'text-gray-700'))}`}>{day}</span>
-                                                <div className="flex gap-1 mt-1.5 h-1.5">
+                                                <span className={`text-sm font-semibold z-10 ${isToday ? `text-${activeTheme.class}-600 dark:text-${activeTheme.class}-400` : (status ? '' : (isRetro ? 'text-green-500' : (isDarkMode ? 'text-gray-200' : 'text-gray-700')))}`}>{day}</span>
+                                                {status && <span className="text-[8px] text-center leading-tight px-1 z-10 font-bold opacity-80">{status.label}</span>}
+                                                {/* Removed Bible Study Label */}
+                                                <div className="flex gap-1 mt-1.5 h-1.5 z-10">
                                                     {hasHomework && <div className="w-1.5 h-1.5 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-800"></div>}
                                                     {hasNotes && <div className={`w-1.5 h-1.5 rounded-full bg-${activeTheme.class}-500 ring-1 ring-white dark:ring-gray-800`}></div>}
                                                 </div>
