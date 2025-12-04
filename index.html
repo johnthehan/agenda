@@ -36,7 +36,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // --- Icon Components (Inline SVGs to avoid dependency complexity) ---
+        // --- Icon Components ---
         const Icon = ({ path, className }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 {path}
@@ -54,13 +54,14 @@
         const X = (props) => <Icon {...props} path={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />;
         const Moon = (props) => <Icon {...props} path={<><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></>} />;
         const Sun = (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></>} />;
+        const CalendarIcon = (props) => <Icon {...props} path={<><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></>} />;
+        const ListIcon = (props) => <Icon {...props} path={<><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></>} />;
 
 
         // --- Main App Logic ---
         const { useState, useEffect } = React;
         const PERIODS = [0, 1, 2, 3, 4, 5, 6];
 
-        // Helper: Get PST Date (Midnight)
         const getPSTDate = () => {
             const now = new Date();
             const pstString = now.toLocaleDateString('en-US', {
@@ -103,6 +104,7 @@
             const [showSettings, setShowSettings] = useState(false);
             const [isLoaded, setIsLoaded] = useState(false);
             const [isDarkMode, setIsDarkMode] = useState(false);
+            const [viewMode, setViewMode] = useState('daily'); // 'daily' | 'calendar'
 
             // Load Data
             useEffect(() => {
@@ -128,15 +130,18 @@
             useEffect(() => {
                 if (isLoaded) {
                     localStorage.setItem('student_agenda_theme', isDarkMode ? 'dark' : 'light');
-                    // Apply class to body for scrollbar styling
                     if (isDarkMode) document.body.classList.add('dark');
                     else document.body.classList.remove('dark');
                 }
             }, [isDarkMode, isLoaded]);
 
-            const changeDay = (days) => {
+            const navigate = (direction) => {
                 const newDate = new Date(currentDate);
-                newDate.setDate(newDate.getDate() + days);
+                if (viewMode === 'daily') {
+                    newDate.setDate(newDate.getDate() + direction);
+                } else {
+                    newDate.setMonth(newDate.getMonth() + direction);
+                }
                 setCurrentDate(newDate);
             };
 
@@ -170,6 +175,31 @@
                 setDefaultClasses(prev => ({ ...prev, [period]: value }));
             };
 
+            // Calendar Helpers
+            const getMonthData = () => {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                return { year, month, firstDay, daysInMonth };
+            };
+
+            const checkDayData = (day) => {
+                const testDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                const key = formatDateKey(testDate);
+                const data = agendaData[key];
+                if (!data) return { hasHomework: false, hasNotes: false };
+
+                let hasHomework = false;
+                let hasNotes = false;
+                
+                Object.values(data).forEach(p => {
+                    if (p.homework && p.homework.trim()) hasHomework = true;
+                    if (p.notes && p.notes.trim()) hasNotes = true;
+                });
+                return { hasHomework, hasNotes };
+            };
+
             const dateKey = formatDateKey(currentDate);
             const dayData = agendaData[dateKey] || {};
 
@@ -184,7 +214,7 @@
             const getPeriodBadgeColor = (p, dark) => {
                 const lightColors = [
                     'bg-purple-100 text-purple-800', 'bg-blue-100 text-blue-800', 'bg-green-100 text-green-800',
-                    'bg-yellow-100 text-yellow-800', 'bg-orange-100 text-orange-800', 'bg-red-100 text-red-800', 'bg-pink-100 text-pink-800'
+                    'bg-yellow-100 text-yellow-800', 'bg-orange-100 text-orange-800', 'bg-red-100 text-red-800', 'bg-pink-100 text-pink-100'
                 ];
                 const darkColors = [
                     'bg-purple-900 text-purple-100', 'bg-blue-900 text-blue-100', 'bg-green-900 text-green-100',
@@ -202,7 +232,10 @@
             const navBtnClass = isDarkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-white text-gray-600 shadow-sm';
             const centerNavClass = isDarkMode ? 'bg-gray-700/50 text-gray-200' : 'bg-gray-100 text-gray-800';
 
-            if (!isLoaded) return null; // Avoid flash of wrong theme
+            if (!isLoaded) return null;
+
+            // Calendar Data
+            const { year, month, firstDay, daysInMonth } = getMonthData();
 
             return (
                 <div className={`min-h-screen font-sans pb-20 transition-colors duration-200 ${bgClass}`}>
@@ -214,6 +247,14 @@
                                     My Agenda
                                 </h1>
                                 <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={() => setViewMode(viewMode === 'daily' ? 'calendar' : 'daily')}
+                                        className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-indigo-400 hover:bg-gray-700' : 'text-indigo-600 hover:bg-gray-100'}`}
+                                        title={viewMode === 'daily' ? "Switch to Calendar" : "Switch to List"}
+                                    >
+                                        {viewMode === 'daily' ? <CalendarIcon className="w-5 h-5" /> : <ListIcon className="w-5 h-5" />}
+                                    </button>
+                                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1"></div>
                                     <button onClick={toggleTheme} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-yellow-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}>
                                         {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                                     </button>
@@ -224,7 +265,7 @@
                             </div>
 
                             <div className={`flex items-center justify-between p-1 rounded-lg transition-colors ${centerNavClass}`}>
-                                <button onClick={() => changeDay(-1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}>
+                                <button onClick={() => navigate(-1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}>
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
                                 <div className="flex items-center gap-2">
@@ -233,16 +274,19 @@
                                     </button>
                                     <div className="flex flex-col items-center leading-tight">
                                         <span className={`font-semibold text-lg ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                                            {formatDateDisplay(currentDate)}
+                                            {viewMode === 'daily' 
+                                                ? formatDateDisplay(currentDate)
+                                                : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                                            }
                                         </span>
-                                        {(['Today', 'Tomorrow', 'Yesterday'].includes(formatDateDisplay(currentDate))) && (
+                                        {viewMode === 'daily' && (['Today', 'Tomorrow', 'Yesterday'].includes(formatDateDisplay(currentDate))) && (
                                             <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                 {currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                             </span>
                                         )}
                                     </div>
                                 </div>
-                                <button onClick={() => changeDay(1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}>
+                                <button onClick={() => navigate(1)} className={`p-2 rounded-md transition-all ${navBtnClass}`}>
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
                             </div>
@@ -250,65 +294,127 @@
                     </header>
 
                     <main className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-                        {PERIODS.map((period) => {
-                            const pData = dayData[period] || {};
-                            return (
-                                <div key={period} className={`rounded-xl border-l-4 ${getPeriodColor(period)} overflow-hidden transition-all hover:shadow-md ${cardClass}`}>
-                                    <div className="p-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-3 w-full">
-                                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${getPeriodBadgeColor(period, isDarkMode)}`}>
-                                                    Period {period}
-                                                </span>
-                                                <input 
-                                                    type="text"
-                                                    placeholder={defaultClasses[period] ? defaultClasses[period] : "Add Subject..."}
-                                                    value={pData.subject !== undefined ? pData.subject : (defaultClasses[period] || '')}
-                                                    onChange={(e) => handleInputChange(period, 'subject', e.target.value)}
-                                                    className={`font-bold text-lg border-none focus:ring-0 p-0 bg-transparent flex-1 ${inputClass}`}
-                                                />
+                        {viewMode === 'daily' ? (
+                            // --- Daily View ---
+                            <>
+                                {PERIODS.map((period) => {
+                                    const pData = dayData[period] || {};
+                                    return (
+                                        <div key={period} className={`rounded-xl border-l-4 ${getPeriodColor(period)} overflow-hidden transition-all hover:shadow-md ${cardClass}`}>
+                                            <div className="p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center gap-3 w-full">
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${getPeriodBadgeColor(period, isDarkMode)}`}>
+                                                            Period {period}
+                                                        </span>
+                                                        <input 
+                                                            type="text"
+                                                            placeholder={defaultClasses[period] ? defaultClasses[period] : "Add Subject..."}
+                                                            value={pData.subject !== undefined ? pData.subject : (defaultClasses[period] || '')}
+                                                            onChange={(e) => handleInputChange(period, 'subject', e.target.value)}
+                                                            className={`font-bold text-lg border-none focus:ring-0 p-0 bg-transparent flex-1 ${inputClass}`}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className={`rounded-lg p-3 group focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all ${textAreaBoxClass}`}>
+                                                        <div className="flex items-center gap-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                                            <PenTool className="w-3 h-3" />
+                                                            <span>Classwork / Notes</span>
+                                                        </div>
+                                                        <textarea
+                                                            placeholder="What did we do today?"
+                                                            value={pData.notes || ''}
+                                                            onChange={(e) => handleInputChange(period, 'notes', e.target.value)}
+                                                            className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${textAreaTextClass}`}
+                                                        />
+                                                    </div>
+
+                                                    <div className={`rounded-lg p-3 group transition-all border ${
+                                                        pData.homework 
+                                                        ? (isDarkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-50 border-red-100') 
+                                                        : (isDarkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-50 border-green-100')
+                                                    }`}>
+                                                        <div className={`flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider ${
+                                                            pData.homework 
+                                                                ? (isDarkMode ? 'text-red-300' : 'text-red-600') 
+                                                                : (isDarkMode ? 'text-green-300' : 'text-green-600')
+                                                        }`}>
+                                                            {pData.homework ? <AlertCircle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
+                                                            <span>Homework</span>
+                                                        </div>
+                                                        <textarea
+                                                            placeholder="No homework..."
+                                                            value={pData.homework || ''}
+                                                            onChange={(e) => handleInputChange(period, 'homework', e.target.value)}
+                                                            className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${textAreaTextClass}`}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className={`rounded-lg p-3 group focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all ${textAreaBoxClass}`}>
-                                                <div className="flex items-center gap-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                    <PenTool className="w-3 h-3" />
-                                                    <span>Classwork / Notes</span>
-                                                </div>
-                                                <textarea
-                                                    placeholder="What did we do today?"
-                                                    value={pData.notes || ''}
-                                                    onChange={(e) => handleInputChange(period, 'notes', e.target.value)}
-                                                    className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${textAreaTextClass}`}
-                                                />
-                                            </div>
-
-                                            <div className={`rounded-lg p-3 group transition-all border ${
-                                                pData.homework 
-                                                ? (isDarkMode ? 'bg-red-900/20 border-red-700/50' : 'bg-red-50 border-red-100') 
-                                                : (isDarkMode ? 'bg-green-900/20 border-green-700/50' : 'bg-green-50 border-green-100')
-                                            }`}>
-                                                <div className={`flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider ${
-                                                    pData.homework 
-                                                        ? (isDarkMode ? 'text-red-300' : 'text-red-600') 
-                                                        : (isDarkMode ? 'text-green-300' : 'text-green-600')
-                                                }`}>
-                                                    {pData.homework ? <AlertCircle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
-                                                    <span>Homework</span>
-                                                </div>
-                                                <textarea
-                                                    placeholder="No homework..."
-                                                    value={pData.homework || ''}
-                                                    onChange={(e) => handleInputChange(period, 'homework', e.target.value)}
-                                                    className={`w-full bg-transparent border-none p-0 text-sm focus:ring-0 resize-none min-h-[60px] ${textAreaTextClass}`}
-                                                />
-                                            </div>
+                                    );
+                                })}
+                            </>
+                        ) : (
+                            // --- Calendar View ---
+                            <div className={`rounded-xl shadow-md p-4 animate-in fade-in zoom-in duration-200 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                                {/* Weekday Headers */}
+                                <div className="grid grid-cols-7 mb-4 text-center">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day} className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            {day}
                                         </div>
-                                    </div>
+                                    ))}
                                 </div>
-                            );
-                        })}
+                                
+                                {/* Calendar Grid */}
+                                <div className="grid grid-cols-7 gap-2">
+                                    {/* Empty cells for start of month */}
+                                    {Array(firstDay).fill(null).map((_, i) => (
+                                        <div key={`empty-${i}`} className="aspect-square"></div>
+                                    ))}
+                                    
+                                    {/* Days */}
+                                    {Array(daysInMonth).fill(null).map((_, i) => {
+                                        const day = i + 1;
+                                        const { hasHomework, hasNotes } = checkDayData(day);
+                                        const dateObj = new Date(year, month, day);
+                                        const isToday = formatDateKey(new Date()) === formatDateKey(dateObj);
+                                        
+                                        return (
+                                            <button
+                                                key={day}
+                                                onClick={() => {
+                                                    setCurrentDate(dateObj);
+                                                    setViewMode('daily');
+                                                }}
+                                                className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all hover:scale-105 active:scale-95 border-2 ${
+                                                    isToday 
+                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' 
+                                                        : (isDarkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50')
+                                                }`}
+                                            >
+                                                <span className={`text-sm font-semibold ${isToday ? 'text-indigo-600 dark:text-indigo-400' : (isDarkMode ? 'text-gray-200' : 'text-gray-700')}`}>
+                                                    {day}
+                                                </span>
+                                                
+                                                <div className="flex gap-1 mt-1.5 h-1.5">
+                                                    {hasHomework && (
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 ring-1 ring-white dark:ring-gray-800"></div>
+                                                    )}
+                                                    {hasNotes && (
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 ring-1 ring-white dark:ring-gray-800"></div>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         <div className="text-center pt-8 text-gray-400 text-sm">
                             <p>Changes are saved automatically to this device.</p>
                         </div>
