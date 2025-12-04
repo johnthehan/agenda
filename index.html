@@ -23,17 +23,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        @media print {
-            @page { margin: 0.5cm; }
-            body { background: white !important; color: black !important; -webkit-print-color-adjust: exact; }
-            header, .no-print, .settings-modal, .sticky-note { display: none !important; }
-            .print-break { page-break-inside: avoid; }
-            main { padding: 0 !important; max-width: 100% !important; }
-            .print-full-width { width: 100% !important; }
-            textarea { border: 1px solid #ddd !important; resize: none; }
-            .timeline-col { display: none !important; } 
-        }
-
         .font-retro { font-family: 'Courier New', Courier, monospace; letter-spacing: -0.5px; }
         .font-paper { font-family: 'Georgia', 'Times New Roman', Times, serif; }
     </style>
@@ -67,7 +56,6 @@
         const CheckSquare = (props) => <Icon {...props} path={<><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>} />;
         const Coffee = (props) => <Icon {...props} path={<><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="1" y2="4"/><line x1="10" x2="10" y1="1" y2="4"/><line x1="14" x2="14" y1="1" y2="4"/></>} />;
         const MoonStars = (props) => <Icon {...props} path={<><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></>} />;
-        const Printer = (props) => <Icon {...props} path={<><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></>} />;
 
         const { useState, useEffect, useRef } = React;
         const PERIODS = [0, 1, 2, 3, 4, 5, 6];
@@ -459,10 +447,6 @@
                 }
             };
 
-            const handlePrint = () => {
-                window.print();
-            };
-
             const dateKey = formatDateKey(currentDate);
             const dayData = agendaData[dateKey] || {};
             const activeTheme = THEMES[themeId] || THEMES.modern_indigo;
@@ -518,7 +502,6 @@
                                     <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-1"></div>
                                     
                                     <button onClick={() => setViewMode(viewMode === 'daily' ? 'calendar' : 'daily')} className={`p-2 rounded-full transition-colors ${isDarkMode ? `text-${activeTheme.class}-400 hover:bg-gray-700` : `text-${activeTheme.class}-600 hover:bg-gray-100`}`} title="Toggle View"><CalendarIcon className="w-5 h-5" /></button>
-                                    <button onClick={handlePrint} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`} title="Print"><Printer className="w-5 h-5" /></button>
                                     <button onClick={toggleTheme} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-yellow-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}>{isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
                                     <button onClick={() => setShowSettings(true)} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'}`}><Settings className="w-5 h-5" /></button>
                                 </div>
